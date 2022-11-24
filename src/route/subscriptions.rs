@@ -8,8 +8,8 @@ use uuid::Uuid;
 
 #[derive(Deserialize)]
 pub struct FormData {
-    name: String,
     email: String,
+    name: String,
 }
 
 #[tracing::instrument(

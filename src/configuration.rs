@@ -1,26 +1,29 @@
 use config::{Config, ConfigError};
 use secrecy::{ExposeSecret, Secret};
 use serde::Deserialize;
+use serde_aux::field_attributes::deserialize_number_from_string;
 
 #[derive(Deserialize)]
 pub struct Settings {
-    pub database: DatabaseSettings,
     pub application: ApplicationSettings,
+    pub database: DatabaseSettings,
 }
 
 #[derive(Deserialize)]
 pub struct ApplicationSettings {
-    pub port: u16,
     pub host: String,
+    #[serde(deserialize_with = "deserialize_number_from_string")]
+    pub port: u16,
 }
 
 #[derive(Deserialize)]
 pub struct DatabaseSettings {
-    pub username: String,
-    pub password: Secret<String>,
-    pub port: u16,
-    pub host: String,
     pub database_name: String,
+    pub host: String,
+    pub password: Secret<String>,
+    #[serde(deserialize_with = "deserialize_number_from_string")]
+    pub port: u16,
+    pub username: String,
 }
 
 impl DatabaseSettings {
@@ -84,11 +87,17 @@ pub fn get_configuration() -> Result<Settings, ConfigError> {
 
     let environment_filename = format!("{}.yaml", environment.as_str());
     let settings = Config::builder()
-        .add_source( 
+        .add_source(
             config::File::from(configuration_directory.join("base.yaml"))
         )
         .add_source(
-            config::File::from(configuration_directory.join(environment_filename)) )
+            config::File::from(configuration_directory.join(environment_filename)) 
+        )
+        .add_source(
+            config::Environment::with_prefix("APP")
+                .prefix_separator("_")
+                .separator("__")
+        )
         .build()?;
 
     settings.try_deserialize::<Settings>()
