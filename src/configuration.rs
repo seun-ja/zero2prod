@@ -17,7 +17,7 @@ pub struct ApplicationSettings {
     pub port: u16,
 }
 
-#[derive(Deserialize)]
+#[derive(Deserialize, Debug)]
 pub struct DatabaseSettings {
     pub database_name: String,
     pub host: String,
@@ -45,7 +45,7 @@ impl DatabaseSettings {
         PgConnectOptions::new()
             .host(&self.host)
             .username(&self.username)
-            .password(&self.password.expose_secret())
+            .password(self.password.expose_secret())
             .port(self.port)
             .ssl_mode(ssl_mode)
     }

@@ -60,6 +60,8 @@ pub async fn configure_database(config: &DatabaseSettings) -> PgPool {
         .await
         .expect("Failed to create database.");
 
+    println!("{:#?}", config);
+
     // Migrate database
     let connection_pool = PgPool::connect_with(config.without_db())
         .await
