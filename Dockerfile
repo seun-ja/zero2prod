@@ -8,7 +8,6 @@ RUN apt update && apt install lld clang -y
 COPY . .
 ENV SQLX_OFFLINE true
 RUN cargo build --release
-RUN sqlx migrate run
 
 #Runtime state
 FROM debian:bullseye-slim AS runtime
