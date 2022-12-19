@@ -21,7 +21,10 @@ pub struct FormData {
         subscriber_name = %form.name
     )
 )]
-pub async fn subscribe(form: Form<FormData>, pool: web::Data<PgPool>) -> HttpResponse {
+pub async fn subscribe(
+    form: Form<FormData>, 
+    pool: web::Data<PgPool>
+) -> HttpResponse {
     if !is_valid_name(&form.name) {
         return HttpResponse::BadRequest().finish();
     }
