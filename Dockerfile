@@ -15,7 +15,6 @@ COPY . .
 
 ENV SQLX_OFFLINE true
 RUN cargo build --release --bin zero2prod
-RUN chmod +x /app/init_db.sh
 
 FROM debian:bullseye-slim AS runtime
 WORKDIR /app
