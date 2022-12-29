@@ -1,15 +1,16 @@
 use std::net::TcpListener;
 
 use crate::{
+    configuration::{DatabaseSettings, Settings},
     email_client::EmailClient,
-    route::{health_check::health_check, subscriptions::subscribe}, configuration::{Settings, DatabaseSettings},
+    route::{health_check::health_check, subscriptions::subscribe},
 };
 use actix_web::{
     dev::Server,
     web::{self, Data},
     App, HttpServer,
 };
-use sqlx::{PgPool, postgres::PgPoolOptions};
+use sqlx::{postgres::PgPoolOptions, PgPool};
 use tracing_actix_web::TracingLogger;
 
 pub struct Application {
@@ -24,16 +25,16 @@ impl Application {
             .email_client
             .sender()
             .expect("Invalid sender email address");
-    
+
         let timeout = configuration.email_client.timeout();
-    
+
         let email_client = EmailClient::new(
             configuration.email_client.base_url,
             sender_email,
             configuration.email_client.authorization_token,
             timeout,
         );
-    
+
         let address = format!(
             "{}:{}",
             configuration.application.host, configuration.application.port
@@ -41,11 +42,8 @@ impl Application {
         let listener = TcpListener::bind(address).expect("Failed to bind random port");
         let port = listener.local_addr().unwrap().port();
         let server = run(listener, connection_pool, email_client).unwrap();
-        
-        Ok(Self {
-            port,
-            server
-        })
+
+        Ok(Self { port, server })
     }
 
     pub fn port(&self) -> u16 {
@@ -53,10 +51,9 @@ impl Application {
     }
 
     pub async fn run_until_stopped(self) -> Result<(), std::io::Error> {
-            self.server.await
+        self.server.await
     }
 }
-
 
 pub fn get_connection_pool(configuration: &DatabaseSettings) -> PgPool {
     PgPoolOptions::new()

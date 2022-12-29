@@ -30,8 +30,8 @@ pub struct TestApp {
 impl TestApp {
     pub async fn post_subscriptions(&self, body: String) -> reqwest::Response {
         reqwest::Client::new()
-            .post(&format!("{}/subscriptions", &self.address)) 
-            .header("Content-Type", "application/x-www-form-urlencoded") 
+            .post(&format!("{}/subscriptions", &self.address))
+            .header("Content-Type", "application/x-www-form-urlencoded")
             .body(body)
             .send()
             .await
