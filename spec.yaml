@@ -16,6 +16,9 @@ services:
     instance_count: 1
     instance_size_slug: basic-xxs
     envs:
+      - key: APP_APPLICATION__BASE_URL
+        scope: RUN_TIME
+        value: ${APP_URL}
       - key: APP_DATABASE__USERNAME
         scope: RUN_TIME
         value: ${newsletter.USERNAME}
