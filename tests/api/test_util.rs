@@ -105,7 +105,7 @@ pub async fn configure_database(config: &DatabaseSettings) -> PgPool {
         .expect("Failed to connect to Postgres");
 
     connection
-        .execute(format!(r#"CREATE DATABASE "{}";"#, config.database_name).as_str())
+        .execute(&*format!(r#"CREATE DATABASE "{}";"#, config.database_name))
         .await
         .expect("Failed to create database.");
 
