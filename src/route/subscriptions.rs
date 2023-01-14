@@ -1,10 +1,10 @@
 use std::iter;
 
-use anyhow::Context;
 use actix_web::{
     web::{self, Form},
     HttpResponse,
 };
+use anyhow::Context;
 use rand::{distributions::Alphanumeric, thread_rng, Rng};
 use serde::Deserialize;
 use sqlx::{PgPool, Postgres, Transaction};
@@ -48,12 +48,15 @@ pub async fn subscribe(
     email_client: web::Data<EmailClient>,
     base_url: web::Data<ApplicationBaseUrl>,
 ) -> Result<HttpResponse, SubscribeError> {
-    println!("{:#}", form.0.name);
-
-    let new_subscriber: NewSubscriber = form.0
+    let new_subscriber: NewSubscriber = form
+        .0
         .try_into()
         .map_err(SubscribeError::ValidationError)
         .unwrap();
+
+    // let new_subscriber: NewSubscriber= form
+    //     .0
+    //     .try_into();
 
     let mut transaction = pool
         .begin()
