@@ -60,6 +60,6 @@ impl ResponseError for SubscribeError {
         match self {
             SubscribeError::ValidationError(_) => StatusCode::BAD_REQUEST,
             SubscribeError::UnexpectedError(_) => StatusCode::INTERNAL_SERVER_ERROR,
-        } 
+        }
     }
 }
