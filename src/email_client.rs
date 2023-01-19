@@ -203,6 +203,6 @@ mod tests {
             .await;
 
         // Assert
-        claim::assert_err!(outcome);
+        assert!(outcome.is_err());
     }
 }
