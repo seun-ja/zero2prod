@@ -30,7 +30,7 @@ impl Error for StoreTokenError {
     }
 }
 
-fn error_chain_fmt(e: &impl error::Error, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+pub fn error_chain_fmt(e: &impl error::Error, f: &mut fmt::Formatter<'_>) -> fmt::Result {
     writeln!(f, "{e}\n")?;
     let mut current = e.source();
 
