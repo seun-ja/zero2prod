@@ -5,14 +5,17 @@ use crate::{
     email_client::EmailClient,
     route::{
         health_check::health_check, newsletters::publish_newsletter, subscriptions::subscribe,
-        subscriptions_confirm::confirm,
+        subscriptions_confirm::confirm, home::home, login_form, login
     },
 };
+use actix_session::{SessionMiddleware, storage::RedisSessionStore};
 use actix_web::{
     dev::Server,
     web::{self, Data},
-    App, HttpServer,
+    App, HttpServer, cookie::Key,
 };
+use actix_web_flash_messages::{FlashMessagesFramework, storage::CookieMessageStore};
+use secrecy::{Secret, ExposeSecret};
 use sqlx::{postgres::PgPoolOptions, PgPool};
 use tracing_actix_web::TracingLogger;
 
@@ -49,7 +52,9 @@ impl Application {
             connection_pool,
             email_client,
             configuration.application.base_url,
-        )
+            HmacSecret(configuration.application.hmac_secret),
+            configuration.redis_uri,
+        ).await
         .unwrap();
 
         Ok(Self { port, server })
@@ -70,25 +75,39 @@ pub fn get_connection_pool(configuration: &DatabaseSettings) -> PgPool {
         .connect_lazy_with(configuration.with_db())
 }
 
-pub fn run(
+pub async fn run(
     listener: TcpListener,
     db_pool: PgPool,
     email_client: EmailClient,
     base_url: String,
-) -> Result<Server, std::io::Error> {
+    hmac_secret: HmacSecret,
+    redis_uri: Secret<String>,
+) -> Result<Server, anyhow::Error> {
     let db_pool = Data::new(db_pool);
     let email_client = Data::new(email_client);
     let base_url = Data::new(ApplicationBaseUrl(base_url));
+    let secret_key = Key::from(hmac_secret.0.expose_secret().as_bytes());
+    let message_store = CookieMessageStore::builder(
+        secret_key.clone()
+    ).build();
+    let message_framework = FlashMessagesFramework::builder(message_store).build();
+    let redis_store = RedisSessionStore::new(redis_uri.expose_secret()).await?;
     let server = HttpServer::new(move || {
         App::new()
+            .wrap(message_framework.clone())
+            .wrap(SessionMiddleware::new(redis_store.clone(), secret_key.clone()))
             .wrap(TracingLogger::default())
+            .route("/login", web::get().to(login_form))
+            .route("/login", web::post().to(login))
             .route("/health_check", web::get().to(health_check))
+            .route("/", web::get().to(home))
             .route("/subscriptions", web::post().to(subscribe))
             .route("/subscriptions/confirm", web::get().to(confirm))
             .route("/newsletters", web::post().to(publish_newsletter))
             .app_data(db_pool.clone())
             .app_data(email_client.clone())
             .app_data(base_url.clone())
+            .app_data(Data::new(HmacSecret(hmac_secret.0.clone())))
     })
     .listen(listener)?
     .run();
@@ -97,3 +116,6 @@ pub fn run(
 }
 
 pub struct ApplicationBaseUrl(pub String);
+
+#[derive(Clone)]
+pub struct HmacSecret(pub Secret<String>);
