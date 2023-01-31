@@ -1,15 +1,15 @@
 use anyhow::Context;
-use argon2::{PasswordHash, Argon2, PasswordVerifier};
-use secrecy::{Secret, ExposeSecret};
+use argon2::{Argon2, PasswordHash, PasswordVerifier};
+use secrecy::{ExposeSecret, Secret};
 use sqlx::PgPool;
 
 use crate::telemetry::spawn_blocking_with_tracing;
 
-#[derive(thiserror::Error, Debug)] 
+#[derive(thiserror::Error, Debug)]
 pub enum AuthError {
-    #[error("Invalid credentials.")] 
-    InvalidCredentials(#[source] anyhow::Error), 
-    #[error(transparent)] 
+    #[error("Invalid credentials.")]
+    InvalidCredentials(#[source] anyhow::Error),
+    #[error(transparent)]
     UnexpectedError(#[from] anyhow::Error),
 }
 
@@ -28,12 +28,11 @@ pub async fn validate_credentials(
         "$argon2id$v=19$m=15000,t=2,p=1$\
         gZiV/M1gPc22ElAH/Jh1Hw$\
         CWOrkoo7oJBQ/iyh7uJ0LO2aLEfrHwTWllSAxT0zRno"
-        .to_string()
+            .to_string(),
     );
 
-    if let Some((stored_user_id, stored_password_hash)) = 
-        get_stored_credentials(&credentials.username, &pool)
-            .await?
+    if let Some((stored_user_id, stored_password_hash)) =
+        get_stored_credentials(&credentials.username, pool).await?
     {
         user_id = Some(stored_user_id);
         expected_password_hash = stored_password_hash;

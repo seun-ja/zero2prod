@@ -4,18 +4,19 @@ use crate::{
     configuration::{DatabaseSettings, Settings},
     email_client::EmailClient,
     route::{
-        health_check::health_check, newsletters::publish_newsletter, subscriptions::subscribe,
-        subscriptions_confirm::confirm, home::home, login_form, login
+        admin_dashboard, health_check::health_check, home::home, login, login_form,
+        newsletters::publish_newsletter, subscriptions::subscribe, subscriptions_confirm::confirm,
     },
 };
-use actix_session::{SessionMiddleware, storage::RedisSessionStore};
+use actix_session::{storage::RedisSessionStore, SessionMiddleware};
 use actix_web::{
+    cookie::Key,
     dev::Server,
     web::{self, Data},
-    App, HttpServer, cookie::Key,
+    App, HttpServer,
 };
-use actix_web_flash_messages::{FlashMessagesFramework, storage::CookieMessageStore};
-use secrecy::{Secret, ExposeSecret};
+use actix_web_flash_messages::{storage::CookieMessageStore, FlashMessagesFramework};
+use secrecy::{ExposeSecret, Secret};
 use sqlx::{postgres::PgPoolOptions, PgPool};
 use tracing_actix_web::TracingLogger;
 
@@ -54,7 +55,8 @@ impl Application {
             configuration.application.base_url,
             HmacSecret(configuration.application.hmac_secret),
             configuration.redis_uri,
-        ).await
+        )
+        .await
         .unwrap();
 
         Ok(Self { port, server })
@@ -87,16 +89,18 @@ pub async fn run(
     let email_client = Data::new(email_client);
     let base_url = Data::new(ApplicationBaseUrl(base_url));
     let secret_key = Key::from(hmac_secret.0.expose_secret().as_bytes());
-    let message_store = CookieMessageStore::builder(
-        secret_key.clone()
-    ).build();
+    let message_store = CookieMessageStore::builder(secret_key.clone()).build();
     let message_framework = FlashMessagesFramework::builder(message_store).build();
     let redis_store = RedisSessionStore::new(redis_uri.expose_secret()).await?;
     let server = HttpServer::new(move || {
         App::new()
             .wrap(message_framework.clone())
-            .wrap(SessionMiddleware::new(redis_store.clone(), secret_key.clone()))
+            .wrap(SessionMiddleware::new(
+                redis_store.clone(),
+                secret_key.clone(),
+            ))
             .wrap(TracingLogger::default())
+            .route("/admin/dashboard", web::get().to(admin_dashboard))
             .route("/login", web::get().to(login_form))
             .route("/login", web::post().to(login))
             .route("/health_check", web::get().to(health_check))

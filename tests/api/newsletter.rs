@@ -159,7 +159,7 @@ async fn requests_missing_authorization_are_rejected() {
 #[tokio::test]
 async fn non_existing_user_is_rejected() {
     let app = spawn_app().await;
-    
+
     let username = Uuid::new_v4().to_string();
     let password = Uuid::new_v4().to_string();
     let response = reqwest::Client::new()

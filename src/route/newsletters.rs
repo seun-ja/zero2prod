@@ -11,7 +11,9 @@ use serde::Deserialize;
 use sqlx::PgPool;
 
 use crate::{
-    domain::SubscriberEmail, email_client::EmailClient, authentication::{AuthError, validate_credentials, Credentials},
+    authentication::{validate_credentials, AuthError, Credentials},
+    domain::SubscriberEmail,
+    email_client::EmailClient,
 };
 
 use super::error::error_chain_fmt;
@@ -72,19 +74,16 @@ pub async fn publish_newsletter(
     email_client: web::Data<EmailClient>,
     request: HttpRequest,
 ) -> Result<HttpResponse, PublishError> {
-    let credentials = basic_authentication(request.headers())
-        .map_err(PublishError::AuthError)?;
-    tracing::Span::current()
-        .record("username", &tracing::field::display(&credentials.username));
+    let credentials = basic_authentication(request.headers()).map_err(PublishError::AuthError)?;
+    tracing::Span::current().record("username", &tracing::field::display(&credentials.username));
 
     let user_id = validate_credentials(credentials, &pool)
         .await
         .map_err(|e| match e {
-            AuthError::InvalidCredentials(_) => PublishError::AuthError(e.into()), 
+            AuthError::InvalidCredentials(_) => PublishError::AuthError(e.into()),
             AuthError::UnexpectedError(_) => PublishError::UnexpectedError(e.into()),
         })?;
-    tracing::Span::current()
-        .record("user_id", &tracing::field::display(&user_id));
+    tracing::Span::current().record("user_id", &tracing::field::display(&user_id));
 
     let subscribers = get_confirmed_subscribers(&pool).await?;
 

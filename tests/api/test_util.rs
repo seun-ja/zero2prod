@@ -1,4 +1,4 @@
-use argon2::{password_hash::SaltString, Argon2, PasswordHasher, Algorithm, Version, Params};
+use argon2::{password_hash::SaltString, Algorithm, Argon2, Params, PasswordHasher, Version};
 use once_cell::sync::Lazy;
 use reqwest::{redirect, Client};
 use sqlx::{Connection, Executor, PgConnection, PgPool};
@@ -35,19 +35,31 @@ pub struct TestApp {
 }
 
 impl TestApp {
-    pub async fn get_login_html(&self) -> String {
-        self.api_client 
-            .get(&format!("{}/login", &self.address)) 
+    pub async fn get_admin_dashboard(&self) -> reqwest::Response {
+        self.api_client
+            .get(&format!("{}/admin/dashboard", &self.address))
             .send()
             .await
-            .expect("Failed to execute request.") 
+            .expect("Failed to execute request.")
+    }
+
+    pub async fn get_admin_dashboard_html(&self) -> String {
+        self.get_admin_dashboard().await.text().await.unwrap()
+    }
+
+    pub async fn get_login_html(&self) -> String {
+        self.api_client
+            .get(&format!("{}/login", &self.address))
+            .send()
+            .await
+            .expect("Failed to execute request.")
             .text()
             .await
             .unwrap()
     }
 
-    pub async fn post_login<Body>(&self, body: &Body) -> reqwest::Response 
-    where 
+    pub async fn post_login<Body>(&self, body: &Body) -> reqwest::Response
+    where
         Body: serde::Serialize,
     {
         self.api_client
@@ -122,10 +134,10 @@ impl TestUser {
             Algorithm::Argon2id,
             Version::V0x13,
             Params::new(15000, 2, 1, None).unwrap(),
-            )
-            .hash_password(self.password.as_bytes(), &salt)
-            .unwrap()
-            .to_string();
+        )
+        .hash_password(self.password.as_bytes(), &salt)
+        .unwrap()
+        .to_string();
 
         sqlx::query!(
             "INSERT INTO users (user_id, username, password_hash)
@@ -162,8 +174,8 @@ pub async fn spawn_app() -> TestApp {
 
     let _ = tokio::spawn(application.run_until_stopped());
 
-    let client = Client::builder() 
-        .redirect(redirect::Policy::none()) 
+    let client = Client::builder()
+        .redirect(redirect::Policy::none())
         .cookie_store(true)
         .build()
         .unwrap();
@@ -211,5 +223,5 @@ pub struct ConfirmationLinks {
 
 pub fn assert_is_redirect_to(response: &reqwest::Response, location: &str) {
     assert_eq!(response.status().as_u16(), 303);
-    assert_eq!(response.headers().get("Location").unwrap(), location); 
+    assert_eq!(response.headers().get("Location").unwrap(), location);
 }
