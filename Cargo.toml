@@ -11,6 +11,7 @@ path = "src/lib.rs"
 [dependencies]
 actix-web = "4.2.1"
 actix-web-flash-messages = { version = "0.4", features = ["cookies"] }
+actix-web-lab = "0.16"
 actix-session = { version = "0.6", features = ["redis-rs-tls-session"] }
 argon2 = { version = "0.4", features = ["std"] }
 anyhow = "1"
@@ -42,7 +43,7 @@ default-features = false
 features = ["json", "rustls-tls", "cookies"]
 
 [dependencies.sqlx] 
-version = "0.6" 
+version = "0.6.2" 
 default-features = false 
 features = [
     "runtime-tokio-rustls",
