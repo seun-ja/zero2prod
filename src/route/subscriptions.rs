@@ -54,18 +54,10 @@ pub async fn subscribe(
         .map_err(SubscribeError::ValidationError)
         .unwrap();
 
-    // let new_subscriber: NewSubscriber= form
-    //     .0
-    //     .try_into();
-
     let mut transaction = pool
         .begin()
         .await
         .context("Failed to acquire a Postgres connection from the pool")?;
-
-    // if !check_subscriber_exist(&new_subscriber.email) {
-    //     return HttpResponse::InternalServerError().finish()
-    // }
 
     let subscriber_id = insert_subscriber(&mut transaction, &new_subscriber)
         .await
@@ -164,7 +156,7 @@ pub async fn send_confirmation_email(
     );
 
     email_client
-        .send_email(new_subscriber.email, "Welcome!", &html_body, &plain_body)
+        .send_email(&new_subscriber.email, "Welcome!", &html_body, &plain_body)
         .await
 }
 

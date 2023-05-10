@@ -30,7 +30,7 @@ impl EmailClient {
 
     pub async fn send_email(
         &self,
-        receipient: SubscriberEmail,
+        receipient: &SubscriberEmail,
         subject: &str,
         html_body: &str,
         text_body: &str,
@@ -39,8 +39,6 @@ impl EmailClient {
             .expect("Invalid url")
             .join("/email")
             .expect("invalid url extension");
-
-        println!("{url}");
 
         let request_body = SendEmailRequest {
             from: self.sender.as_ref(),
@@ -144,7 +142,7 @@ mod tests {
 
         // Act
         let _ = email_client
-            .send_email(subscriber_email(), &subject(), &content(), &content())
+            .send_email(&subscriber_email(), &subject(), &content(), &content())
             .await;
     }
 
@@ -160,7 +158,7 @@ mod tests {
             .await;
 
         let result = email_client
-            .send_email(subscriber_email(), &subject(), &content(), &content())
+            .send_email(&subscriber_email(), &subject(), &content(), &content())
             .await;
 
         assert!(result.is_ok())
@@ -178,7 +176,7 @@ mod tests {
             .await;
 
         let result = email_client
-            .send_email(subscriber_email(), &subject(), &content(), &content())
+            .send_email(&subscriber_email(), &subject(), &content(), &content())
             .await;
 
         assert!(result.is_err());
@@ -199,7 +197,7 @@ mod tests {
 
         // Act
         let outcome = email_client
-            .send_email(subscriber_email(), &subject(), &content(), &content())
+            .send_email(&subscriber_email(), &subject(), &content(), &content())
             .await;
 
         // Assert

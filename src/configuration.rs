@@ -14,6 +14,7 @@ pub struct Settings {
     pub application: ApplicationSettings,
     pub database: DatabaseSettings,
     pub email_client: EmailClientSettings,
+    pub redis_uri: Secret<String>,
 }
 
 #[derive(Deserialize, Clone)]
@@ -22,6 +23,7 @@ pub struct ApplicationSettings {
     #[serde(deserialize_with = "deserialize_number_from_string")]
     pub port: u16,
     pub base_url: String,
+    pub hmac_secret: Secret<String>,
 }
 
 #[derive(Deserialize, Debug, Clone)]
@@ -63,6 +65,7 @@ pub struct EmailClientSettings {
     pub base_url: String,
     pub sender_email: String,
     pub authorization_token: Secret<String>,
+    #[serde(deserialize_with = "deserialize_number_from_string")]
     pub timeout_milliseconds: u64,
 }
 
